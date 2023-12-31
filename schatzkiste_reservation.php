@@ -11,6 +11,8 @@ class ReservierungsPlugin {
 
     public function __construct() {
 
+        error_log("RESERVATION PLUGIN ----------- Construct");
+
         // Hinzufügen eines Hooks beim Hinzufügen von Produkten zum Warenkorb
         add_action('woocommerce_add_to_cart', array($this, 'produkt_reservieren'), 10, 6);
 
@@ -31,15 +33,21 @@ class ReservierungsPlugin {
     public function produkt_reservieren($cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data) {
         // Überprüfen, ob das Produkt reserviert werden soll (füge hier deine Bedingungen hinzu)
         $reserviertes_produkt = true;
-        if ($reserviertes_produkt) {
+        $current_user = wp_get_current_user();
+        if ($reserviertes_produkt && isset($current_user) && $current_user->ID > 0) {
+            error_log("RESERVATION PLUGIN ----------- reserve $product_id for user $current_user->ID");
             // Produkte als reserviert markieren und Reservierungszeitpunkt und Benutzer speichern
             update_post_meta($product_id, '_reserved', 'yes');
             update_post_meta($product_id, '_reservation_timestamp', current_time('timestamp'));
 
             // Benutzer-ID speichern
-            $current_user = wp_get_current_user();
+            
             update_post_meta($product_id, '_reservation_user_id', $current_user->ID);
         }
+        else {
+            error_log("RESERVATION PLUGIN ----------- No reserveation $product_id for $current_user->ID");
+        }
+
     }
 
     public function ausgeblendete_produkte_filtern($q) {
@@ -82,6 +90,7 @@ class ReservierungsPlugin {
 
     public function reservierung_entfernen($cart_item_key, $cart) {
         $product_id = $cart->cart_contents[$cart_item_key]['product_id'];
+        error_log("RESERVATION PLUGIN ----------- remove reservation for product $product_id ");
         delete_post_meta($product_id, '_reserved');
         delete_post_meta($product_id, '_reservation_timestamp');
         delete_post_meta($product_id, '_reservation_user_id');
