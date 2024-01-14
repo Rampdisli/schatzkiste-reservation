@@ -1,4 +1,3 @@
-
 <?php
 /**
  * Plugin Name: Tamaras Schatzkiste Reservations Mechanismus
@@ -10,8 +9,6 @@
 class ReservierungsPlugin {
 
     public function __construct() {
-
-        error_log("RESERVATION PLUGIN ----------- Construct");
 
         // Hinzufügen eines Hooks beim Hinzufügen von Produkten zum Warenkorb
         add_action('woocommerce_add_to_cart', array($this, 'produkt_reservieren'), 10, 6);
@@ -34,8 +31,7 @@ class ReservierungsPlugin {
         // Überprüfen, ob das Produkt reserviert werden soll (füge hier deine Bedingungen hinzu)
         $reserviertes_produkt = true;
         $current_user = wp_get_current_user();
-        if ($reserviertes_produkt && isset($current_user) && $current_user->ID > 0) {
-            error_log("RESERVATION PLUGIN ----------- reserve $product_id for user $current_user->ID");
+        if ($reserviertes_produkt && isset($current_user) && $current_user->ID >0) {
             // Produkte als reserviert markieren und Reservierungszeitpunkt und Benutzer speichern
             update_post_meta($product_id, '_reserved', 'yes');
             update_post_meta($product_id, '_reservation_timestamp', current_time('timestamp'));
@@ -44,10 +40,6 @@ class ReservierungsPlugin {
             
             update_post_meta($product_id, '_reservation_user_id', $current_user->ID);
         }
-        else {
-            error_log("RESERVATION PLUGIN ----------- No reserveation $product_id for $current_user->ID");
-        }
-
     }
 
     public function ausgeblendete_produkte_filtern($q) {
@@ -61,24 +53,30 @@ class ReservierungsPlugin {
         woocommerce_wp_checkbox(array('id' => '_reserved', 'label' => 'Reserviertes Produkt'));
 
         echo '<div class="options_group">';
-        woocommerce_wp_text_input(array(
-            'id'          => '_reservation_timestamp',
-            'label'       => 'Reservierungszeitpunkt',
-            'placeholder' => '',
-            'description' => '',
-            'custom_attributes' => array('readonly' => 'readonly'),
-            'value'       => date('Y-m-d H:i:s', get_post_meta(get_the_ID(), '_reservation_timestamp', true)),
-        ));
+        $reservation_time = get_post_meta(get_the_ID(), '_reservation_timestamp', true);
+        if(isset($reservation_time) && $reservation_time > 0){
+            woocommerce_wp_text_input(array(
+                'id'          => '_reservation_timestamp',
+                'label'       => 'Reservierungszeitpunkt',
+                'placeholder' => '',
+                'description' => '',
+                'custom_attributes' => array('readonly' => 'readonly'),
+                'value'       => date('Y-m-d H:i:s', $reservation_time),
+            ));
+        }
         
-        // Neues Textfeld für Benutzer-ID hinzufügen
-        woocommerce_wp_text_input(array(
-            'id'          => '_reservation_user_id',
-            'label'       => 'Benutzer-ID',
-            'placeholder' => '',
-            'description' => '',
-            'custom_attributes' => array('readonly' => 'readonly'),
-            'value'       => esc_html(get_post_meta(get_the_ID(), '_reservation_user_id', true)),
-        ));
+        $reservation_user_id = get_post_meta(get_the_ID(), '_reservation_user_id', true);
+        if(isset($reservation_user_id) && strlen($reservation_user_id)> 1){    
+            // Neues Textfeld für Benutzer-ID hinzufügen
+            woocommerce_wp_text_input(array(
+                'id'          => '_reservation_user_id',
+                'label'       => 'Benutzer-ID',
+                'placeholder' => '',
+                'description' => '',
+                'custom_attributes' => array('readonly' => 'readonly'),
+                'value'       => esc_html($reservation_user_id),
+            ));
+        }
 
         echo '</div>';
     }
@@ -90,7 +88,6 @@ class ReservierungsPlugin {
 
     public function reservierung_entfernen($cart_item_key, $cart) {
         $product_id = $cart->cart_contents[$cart_item_key]['product_id'];
-        error_log("RESERVATION PLUGIN ----------- remove reservation for product $product_id ");
         delete_post_meta($product_id, '_reserved');
         delete_post_meta($product_id, '_reservation_timestamp');
         delete_post_meta($product_id, '_reservation_user_id');
