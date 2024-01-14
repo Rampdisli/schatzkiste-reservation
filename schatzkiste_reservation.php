@@ -43,9 +43,7 @@ class ReservierungsPlugin {
     }
 
     public function ausgeblendete_produkte_filtern($q) {
-        if (is_shop()) {
-            $q->set('meta_query', array(array('key' => '_reserved', 'value' => 'yes', 'compare' => 'NOT EXISTS')));
-        }
+        $q->set('meta_query', array(array('key' => '_reserved', 'value' => 'yes', 'compare' => 'NOT EXISTS')));
     }
 
 
