@@ -24,14 +24,29 @@ class ReservierungsPlugin {
 
         // Hinzufügen eines Hooks zum Löschen der Reservierung beim Entfernen des Produkts aus dem Warenkorb
         add_action('woocommerce_remove_cart_item', array($this, 'reservierung_entfernen'), 10, 2);
+        
+        //add_action('wp_enqueue_scripts', array($this,'my_custom_pagination_enqueue_script'));
+        add_filter('woocommerce_add_to_cart_validation', array($this, 'my_custom_add_to_cart_validation'), 10, 3);
 
+    }
+
+    public function my_custom_add_to_cart_validation($valid, $product_id, $quantity) {
+        if (get_post_meta($product_id, '_reserved', true) !== 'yes') {
+            // Bedingung ist erfüllt
+            return true;
+        }
+
+        // Bedingung ist nicht erfüllt, zeige eine Fehlermeldung an
+        wc_add_notice("Dieser Produkt ist leider bereits von einem anderen Kunden reserviert.", 'error');
+        return false;
+    
     }
 
     public function produkt_reservieren($cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data) {
         // Überprüfen, ob das Produkt reserviert werden soll (füge hier deine Bedingungen hinzu)
         $reserviertes_produkt = true;
         $current_user = wp_get_current_user();
-        if ($reserviertes_produkt && isset($current_user) && $current_user->ID >0) {
+        if ($reserviertes_produkt && isset($current_user) && $current_user->ID > 0) {
             // Produkte als reserviert markieren und Reservierungszeitpunkt und Benutzer speichern
             update_post_meta($product_id, '_reserved', 'yes');
             update_post_meta($product_id, '_reservation_timestamp', current_time('timestamp'));
@@ -39,13 +54,17 @@ class ReservierungsPlugin {
             // Benutzer-ID speichern
             
             update_post_meta($product_id, '_reservation_user_id', $current_user->ID);
-        }
+        } 
     }
 
     public function ausgeblendete_produkte_filtern($q) {
         $q->set('meta_query', array(array('key' => '_reserved', 'value' => 'yes', 'compare' => 'NOT EXISTS')));
     }
 
+    function my_custom_pagination_enqueue_script() {
+        wp_enqueue_script('my-custom-pagination-js', plugin_dir_url(__FILE__) . 'my-custom-pagination.js', array('jquery'), '1.0', true);
+    }
+    
 
     public function reservierungs_metafeld_hinzufuegen() {
         woocommerce_wp_checkbox(array('id' => '_reserved', 'label' => 'Reserviertes Produkt'));
