@@ -25,7 +25,7 @@ class ReservierungsPlugin {
         // Hinzufügen eines Hooks zum Löschen der Reservierung beim Entfernen des Produkts aus dem Warenkorb
         add_action('woocommerce_remove_cart_item', array($this, 'reservierung_entfernen'), 10, 2);
         
-        //add_action('wp_enqueue_scripts', array($this,'my_custom_pagination_enqueue_script'));
+        add_action('wp_enqueue_scripts', array($this,'my_custom_pagination_enqueue_script'));
         add_filter('woocommerce_add_to_cart_validation', array($this, 'my_custom_add_to_cart_validation'), 10, 3);
 
     }
